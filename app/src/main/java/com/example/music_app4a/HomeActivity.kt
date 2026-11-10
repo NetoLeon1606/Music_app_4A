@@ -1,5 +1,6 @@
 package com.example.music_app4a
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -109,9 +110,33 @@ class HomeActivity : AppCompatActivity() {
                 .centerCrop()
                 .into(imgPortada)
 
+            // Generar evento para mostrar la info de un album
+            vistaAlbum.setOnClickListener {
+
+                // Variable para vereficar si el album tiene ID
+                val idAlbum = album.collectionId
+
+                if(idAlbum != null){
+                    val intent = Intent(this@HomeActivity, AlbumDetailActivity::class.java)
+
+                    intent.putExtra("ID_ALBUM", idAlbum)
+                    intent.putExtra("NOMBRE_ALBUM", album.collectionName)
+                    intent.putExtra("ARTISTA_ALBUM", album.artistName)
+                    intent.putExtra("GENERO_ALBUM", album.primaryGenreName)
+                    intent.putExtra("CANCIONES_ALBUM", album.trackCount)
+                    intent.putExtra("_ALBUM", album.releaseDate)
+                    intent.putExtra("IMAGEN_ALBUM", album.obtenerImagenGrande())
+
+                    startActivity(intent)
+                }
+
+            }
+
             // Mostrar toda la informacion
             contenedor.addView(vistaAlbum)
 
         }
+
     }
+
 }
