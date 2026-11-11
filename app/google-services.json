@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1005520314978",
+    "project_id": "prueba-musicapp-4a",
+    "storage_bucket": "prueba-musicapp-4a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1005520314978:android:491b91426183ef1beda73b",
+        "android_client_info": {
+          "package_name": "com.example.music_app4"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzNT6x729oA8KGIRKMb-LgWD7BPIxzACY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
