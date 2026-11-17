@@ -27,13 +27,13 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var etCorreo : EditText
-    private lateinit var etpass : EditText
-    private lateinit var btnInicio : Button
-    private lateinit var dbHelper : DatabaseHelper
-    private lateinit var auth : FirebaseAuth
+    private lateinit var etCorreo: EditText
+    private lateinit var etpass: EditText
+    private lateinit var btnInicio: Button
+    private lateinit var dbHelper: DatabaseHelper
+    private lateinit var auth: FirebaseAuth
     private lateinit var credentialManager: CredentialManager
-    private lateinit var btnGoogle : ImageButton
+    private lateinit var btnGoogle: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Metodo para iniciar Sesion
-    private fun  iniciarSesion() {
+    private fun iniciarSesion() {
 
         // Acceder a la informacion que escribe el usuario
         val correo = etCorreo.text.toString().trim()
@@ -83,22 +83,22 @@ class MainActivity : AppCompatActivity() {
         // Llamar al metodo de inicio de sesion en la BD
         val resultado = dbHelper.iniciarSesion(correo, pass)
 
-        if(resultado){
+        if (resultado) {
             // Si la sesion es correcta
-            Toast.makeText(this,"Bienvenido :D", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Bienvenido :D", Toast.LENGTH_SHORT).show()
 
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
             // Cerrar la Pantalla Actual
             finish()
-        }else {
-            Toast.makeText(this,"Datos Incorrectos :(", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Datos Incorrectos :(", Toast.LENGTH_SHORT).show()
         }
 
     }
 
     // 3. METODO PARA AUTENTICAR EN FIREBSAE
-    private fun autenticarFirebase(idToken: String){
+    private fun autenticarFirebase(idToken: String) {
 
         val credencialFirebase = GoogleAuthProvider.getCredential(idToken, null)
 
@@ -106,31 +106,33 @@ class MainActivity : AppCompatActivity() {
 
                 inicio ->
 
-                // Validar si el inicio de sesion con Firebase es exitoso
-                if(inicio.isSuccessful){
+            // Validar si el inicio de sesion con Firebase es exitoso
+            if (inicio.isSuccessful) {
 
-                    // Variable para obtener toda la info del usuario
-                    val usuario = auth.currentUser
-                    Toast.makeText(this,"Bienvenido ${usuario?.displayName}", Toast.LENGTH_SHORT).show()
+                // Variable para obtener toda la info del usuario
+                val usuario = auth.currentUser
+                Toast.makeText(this, "Bienvenido ${usuario?.displayName}", Toast.LENGTH_SHORT)
+                    .show()
 
-                    val intent = Intent(this, HomeActivity::class.java)
+                val intent = Intent(this, HomeActivity::class.java)
 
-                    startActivity(intent)
+                startActivity(intent)
 
-                    finish()
+                finish()
 
-                }else{
-                    Toast.makeText(this,"Error al validar con Firebase", Toast.LENGTH_SHORT).show()
-                }
+            } else {
+                Toast.makeText(this, "Error al validar con Firebase", Toast.LENGTH_SHORT).show()
+            }
         }
 
     }
 
     // 4. MeTODO PARA PROCESAR LA CREDENCIAL
-    private fun procesarCredencial(credential: Credential){
+    private fun procesarCredencial(credential: Credential) {
 
-        if(credential is CustomCredential && credential.type ==
-            GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL){
+        if (credential is CustomCredential && credential.type ==
+            GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        ) {
 
             try {
 
@@ -141,17 +143,18 @@ class MainActivity : AppCompatActivity() {
 
                 autenticarFirebase(credencialGoogle.idToken)
 
-            }catch (e : GoogleIdTokenParsingException){
-                Toast.makeText(this,"Credencial invalida", Toast.LENGTH_SHORT).show()
+            } catch (e: GoogleIdTokenParsingException) {
+                Toast.makeText(this, "Credencial invalida", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     // 5. MeTODO PARA INICIAR SESIÓN
-    private fun iniciarSesionGoogle(){
+    private fun iniciarSesionGoogle() {
 
         val inicioGoogle = GetSignInWithGoogleOption.Builder(
-            getString(R.string.default_web_client_id)).build()
+            getString(R.string.default_web_client_id)
+        ).build()
 
         val solicitud = GetCredentialRequest.Builder()
             .addCredentialOption(inicioGoogle)
@@ -169,13 +172,30 @@ class MainActivity : AppCompatActivity() {
 
                 procesarCredencial(resultado.credential)
 
-            }catch (e : GetCredentialException){
-                Toast.makeText(this@MainActivity,"Error al iniciar sesion", Toast.LENGTH_SHORT).show()
+            } catch (e: GetCredentialException) {
+                Toast.makeText(this@MainActivity, "Error al iniciar sesion", Toast.LENGTH_SHORT)
+                    .show()
 
 
             }
 
         }
 
+    }
+
+    // Metodo para mantener la sesion activa
+    override fun onStart() {
+        super.onStart()
+
+        // Variable que guarde el usuario actual
+        val usuarioActual = auth.currentUser
+
+        // Validar que el usuario sea diferente nulo
+        if (usuarioActual != null) {
+            val intent = Intent(this, HomeActivity::class.java)
+
+            startActivity(intent)
+            finish()
+        }
     }
 }
