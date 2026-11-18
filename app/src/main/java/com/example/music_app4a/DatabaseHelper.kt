@@ -14,36 +14,63 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
 
     companion object{
         private const val DATABASE_NAME = "music.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
         private const val TABLE_USUARIOS = "usuarios"
         private const val COL_ID = "id"
         private const val COL_NOMBRE = "nombre"
-
-
         private const val COL_CORREO = "correo"
-        private const val COL_PASSWORD = "password"
+        const val COL_PASSWORD = "password"
 
+        const val TABLE_FAVORITOS = "favoritos"
+        const val COL_FAVORITO = "id"
+        const val COL_ALBUM_ID = "album_id"
+        const val COL_NOMBRE_ALBUM = "nombre_album"
+        const val COL_ARTISTA = "artista"
+        const val COL_GENERO = "genero"
+        const val COL_CANCIONES = "canciones"
+        const val COL_FECHA = "fecha"
+        const val COL_IMAGEN = "imagen"
+
+        // Crear tabla de usuarios
+        private const val CREATE_TABLE_USUARIOS = """
+            CREATE TABLE $TABLE_USUARIOS(
+            $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_NOMBRE TEXT NOT NULL,
+            $COL_CORREO TEXT NOT NULL UNIQUE,
+            $COL_PASSWORD TEXT NOT NULL
+            )
+        """
+
+        // Crear tabla de favoritos
+        private const val CREATE_TABLE_FAVORITOS = """
+            CREATE TABLE $TABLE_FAVORITOS(
+            $COL_FAVORITO INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_ALBUM_ID INTEGER UNIQUE NOT NULL,
+            $COL_NOMBRE_ALBUM TEXT NOT NULL,
+            $COL_ARTISTA TEXT,
+            $COL_GENERO TEXT,
+            $COL_CANCIONES INTEGER,
+            $COL_FECHA TEXT,
+            $COL_IMAGEN TEXT
+            )
+        """
     }
+
+
+
     // Metodo para crear la base de datos
     override fun onCreate(db: SQLiteDatabase?) {
-        val crearTablaUsuarios = """
-            CREATE TABLE $TABLE_USUARIOS(
-                $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_NOMBRE TEXT NOT NULL,
-                $COL_CORREO TEXT NOT NULL UNIQUE,
-                $COL_PASSWORD TEXT NOT NULL
-            )
-        """.trimIndent()
-        // validacion ? cumple : ejecutar codigo
-
-        // Crear tabla de SQL  Usamos db? en lugar de p0? para que coincida con el parámetro de la función
-         db?.execSQL(crearTablaUsuarios)
+        // Crear tabla de SQL
+        db?.execSQL(CREATE_TABLE_USUARIOS)
+        db?.execSQL(CREATE_TABLE_FAVORITOS)
     }
 
     // Metodo para actualizar la base de datos
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, nextVersion: Int) {
-        db?.execSQL("DROP TABLE IF EXISTS $TABLE_USUARIOS")
-        onCreate(db)
+        // Vereficar que la version sea menor a 2
+        if(oldVersion > 2){
+            db?.execSQL(CREATE_TABLE_FAVORITOS)
+        }
     }
 
     // Metodo para Insertar Registro
@@ -95,6 +122,58 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
 
         return usuarioEncontrardo
 
+    }
+
+    // Metodo para registrar informacion proviniente del API
+    fun guardarAlbumFavorito(albumId : Long, nombreAlbum : String, artista : String, genero : String, canciones : Int, fecha : String, imagen : String) : Boolean{
+
+        // Declarar uso de la BD
+        val db = writableDatabase
+
+        val datos = ContentValues().apply {
+            put(COL_ALBUM_ID, albumId)
+            put(COL_NOMBRE_ALBUM, nombreAlbum)
+            put(COL_ARTISTA, artista)
+            put(COL_GENERO, genero)
+            put(COL_CANCIONES, canciones)
+            put(COL_FECHA, fecha)
+            put(COL_IMAGEN, imagen)
+        }
+
+        // Insersion en la tabla
+        val resultado = db.insertWithOnConflict(
+            TABLE_FAVORITOS,
+            null,
+            datos,
+            SQLiteDatabase.CONFLICT_IGNORE)
+
+        return resultado != -1L
+    }
+
+    // Metodo para eliminar un registro
+    fun eliminarAlbumFavorito(albumId: Long) : Boolean{
+        val db = writableDatabase
+
+        val filas_afectadas = db.delete(
+            TABLE_FAVORITOS,
+            "$COL_ALBUM_ID = ?",
+            arrayOf(albumId.toString()))
+
+        return filas_afectadas > 0
+    }
+
+    // Metodo para verificar que un registro exite
+    fun existeAlbumFavorito(albumId: Long) : Boolean{
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT $COL_FAVORITO FROM $TABLE_FAVORITOS WHERE $COL_ALBUM_ID = ?",
+            arrayOf(albumId.toString())
+        )
+
+        val existe = cursor.moveToFirst()
+        cursor.close()
+
+        return existe
     }
 
 }
