@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
+import com.example.music_app.AlbumDetailActivity
 import com.example.music_app4a.model.Album
 import com.example.music_app4a.model.ITunesResponse
 import com.example.music_app4a.network.RetrofitClient
