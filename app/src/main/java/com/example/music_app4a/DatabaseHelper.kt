@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.example.music_app4a.model.AlbumFavorito
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(
     context,
@@ -174,6 +175,55 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
         cursor.close()
 
         return existe
+    }
+
+    // Metodo para acceder a la tabla de favoritos
+    fun obtenerAlbumesFavoritos() : List<AlbumFavorito>{
+
+        val listaFavoritos = mutableListOf<AlbumFavorito>()
+
+        val db = readableDatabase
+
+        val query_sql = """
+            SELECT 
+                $COL_ALBUM_ID,
+                $COL_NOMBRE_ALBUM,
+                $COL_ARTISTA,
+                $COL_GENERO,
+                $COL_CANCIONES,
+                $COL_FECHA,
+                $COL_IMAGEN
+            FROM $TABLE_FAVORITOS
+            ORDEN BY $COL_FAVORITO_ID DESC               
+        """.trimIndent()
+
+        val cursor = db.rawQuery(query_sql,null)
+
+        // Validar que existan registros en la tabla
+        if(cursor.moveToFirst()){
+
+            // Ciclo para guardar la lista que se encuentra en la BD
+            do{
+
+                // Variable que guarda la informacion individual de los registros
+                val album = AlbumFavorito(
+                    albumId = cursor.getLong(0),
+                    nombreAlbum = cursor.getString(1) ?: "Album desconocido",
+                    artista = cursor.getString(2) ?: "Artista desconocido",
+                    genero = cursor.getString(3) ?: "Genero desconocido",
+                    canciones = cursor.getInt(4),
+                    fecha = cursor.getString(5) ?: "Sin fecha",
+                    imagen = cursor.getString(6) ?: ""
+                )
+
+                // Añadir el elemento a la lista
+                listaFavoritos.add(album)
+
+            }while (cursor.moveToNext())
+
+        }
+        cursor.close()
+        return listaFavoritos
     }
 
 }

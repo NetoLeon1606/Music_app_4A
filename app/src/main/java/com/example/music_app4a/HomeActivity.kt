@@ -2,7 +2,6 @@ package com.example.music_app4a
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -10,17 +9,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.example.music_app.AlbumDetailActivity
+import com.example.music_app4a.AlbumDetailActivity
 import com.example.music_app4a.model.Album
 import com.example.music_app4a.model.ITunesResponse
 import com.example.music_app4a.network.RetrofitClient
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.Retrofit
 
 class HomeActivity : AppCompatActivity() {
 
@@ -28,6 +30,9 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var contenedorRock : LinearLayout
     private lateinit var contenedorIndie : LinearLayout
     private lateinit var contenedorEnjambre : LinearLayout
+    private lateinit var bottomNavigationView: BottomNavigationView
+    private lateinit var auth : FirebaseAuth
+    private lateinit var credentialManager : CredentialManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,10 +43,15 @@ class HomeActivity : AppCompatActivity() {
         contenedorRock = findViewById(R.id.contenedorRock)
         contenedorIndie = findViewById(R.id.contenedorIndie)
         contenedorEnjambre = findViewById(R.id.contenedorEnjambre)
+        bottomNavigationView = findViewById(R.id.bottomNavigation)
+        auth = FirebaseAuth.getInstance()
+        credentialManager = CredentialManager.create(this)
 
         obtenerAlbum("Rock", contenedorRock)
         obtenerAlbum("indie", contenedorIndie)
         obtenerAlbum("Enjambre", contenedorEnjambre)
+
+        menuNavegacion()
     }
 
     // Metodo para cargar los albumnes
@@ -50,14 +60,14 @@ class HomeActivity : AppCompatActivity() {
         RetrofitClient.api.obtenerAlbumGenero(
             genero = genero,
             pais = "MX",
-            media ="music",
+            media = "music",
             entidad = "album",
             limite = 10,
         ).enqueue(object : Callback<ITunesResponse> {
 
             // Metodos obligatorios para el funcionanmiento
             // Metodo para verificar que la respuesta sea correcta
-            override fun onResponse(call: Call<ITunesResponse?>, response: Response<ITunesResponse?>) {
+            override fun onResponse(call: Call<ITunesResponse>, response: Response<ITunesResponse>) {
 
                 // Variable que obtenga los resultados del API
                 val albumes = response.body()?.results ?: emptyList()
@@ -68,21 +78,19 @@ class HomeActivity : AppCompatActivity() {
                     tvEstado.visibility = View.GONE
                     mostrarAlbumes(albumes, contenedor)
 
-                }else {
+                } else {
                     Toast.makeText(this@HomeActivity, "No hay Resultados", Toast.LENGTH_SHORT).show()
-
                 }
             }
 
             // Metodo para verificar si no hay respuesta
-            override fun onFailure(call: Call<ITunesResponse?>, t: Throwable) {
+            override fun onFailure(call: Call<ITunesResponse>, t: Throwable) {
                 Toast.makeText(this@HomeActivity, "Error en el Api", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
     // Metodo para mostrar un listado de Albumes
-
     private fun mostrarAlbumes(albumes : List<Album>, contenedor : LinearLayout){
 
         // Evitar resultados duplicados
@@ -125,19 +133,66 @@ class HomeActivity : AppCompatActivity() {
                     intent.putExtra("ARTISTA_ALBUM", album.artistName)
                     intent.putExtra("GENERO_ALBUM", album.primaryGenreName)
                     intent.putExtra("CANCIONES_ALBUM", album.trackCount)
-                    intent.putExtra("_ALBUM", album.releaseDate)
+                    intent.putExtra("FECHA_ALBUM", album.releaseDate)
                     intent.putExtra("IMAGEN_ALBUM", album.obtenerImagenGrande())
 
                     startActivity(intent)
                 }
-
             }
 
             // Mostrar toda la informacion
             contenedor.addView(vistaAlbum)
-
         }
-
     }
 
+    // Metodo para el funcionamiento del menu
+    private fun menuNavegacion(){
+
+        // Mostrar el elemento seleccionado
+        bottomNavigationView.selectedItemId = R.id.nav_inicio
+
+        // Funcion de las opciones
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when(item.itemId){
+                R.id.nav_inicio ->{
+                    // True para indicar que el boton esta activo
+                    true
+                }
+                R.id.nav_favoritos -> {
+                    val intent = Intent(this, FavoritesActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.nav_salir -> {
+                    cerrarSesionGoogle()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    // Metodo para cerrar sesion
+    private fun cerrarSesionGoogle(){
+        auth.signOut()
+
+        lifecycleScope.launch{
+            try {
+
+                // Limpiar las credenciales del usuario
+                credentialManager.clearCredentialState(
+                    androidx.credentials.ClearCredentialStateRequest()
+                )
+
+            } catch (e: Exception){
+                Toast.makeText(this@HomeActivity, "Error: ${e.toString()}", Toast.LENGTH_SHORT).show()
+            }
+            val intent = Intent(this@HomeActivity, MainActivity::class.java)
+
+            // Limpiar toda la informacion e iniciar la pantalla totalmente desde cero
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+            startActivity(intent)
+        }
+    }
 }
