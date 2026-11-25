@@ -37,6 +37,13 @@ class AlbumDetailActivity : AppCompatActivity() {
 
         mostrarInformacionAlbum()
 
+        findViewById<View>(R.id.main)?.let { vistaPrincipal ->
+            ViewCompat.setOnApplyWindowInsetsListener(vistaPrincipal) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
+            }
+        }
     }
 
     private fun mostrarInformacionAlbum() {
