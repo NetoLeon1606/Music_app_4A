@@ -1,5 +1,10 @@
 package com.example.music_app4a
 
+import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -7,11 +12,23 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
 
 class AlbumDetailActivity : AppCompatActivity() {
+
+    companion object{
+
+        private const val CANAL_ID = "canal_general"
+        private const val NOTIFICATION_ID = 1
+        private const val CODIGO_PERMISO = 100
+
+    }
 
     private lateinit var imgPortadaDetalle: ImageView
     private lateinit var tvNombreAlbumDetalle: TextView
@@ -27,15 +44,17 @@ class AlbumDetailActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_album_detail)
 
-        dbHelper = DatabaseHelper(this)
-
         imgPortadaDetalle = findViewById(R.id.imgPortadaDetalle)
         tvNombreAlbumDetalle = findViewById(R.id.tvNombreAlbumDetalle)
         tvArtistaAlbum = findViewById(R.id.tvArtistaAlbumDetalle)
         tvAlbumDetalle = findViewById(R.id.tvAlbumDetalle)
         btnFavorito = findViewById(R.id.btnFavorito)
 
+        dbHelper = DatabaseHelper(this)
+
         mostrarInformacionAlbum()
+
+        crearCanalNoti()
 
         findViewById<View>(R.id.main)?.let { vistaPrincipal ->
             ViewCompat.setOnApplyWindowInsetsListener(vistaPrincipal) { v, insets ->
@@ -92,12 +111,64 @@ class AlbumDetailActivity : AppCompatActivity() {
                     fecha = fecha,
                     imagen = imagen
                 )
+
                 if (guardado) {
                     albumFavorito = true
                     btnFavorito.setImageResource(R.drawable.favorito)
                     Toast.makeText(this, "Album $nombreAlbum agregado a favoritos", Toast.LENGTH_SHORT).show()
                 }
             }
+
+        }
+
+    }
+
+    // 1. Metodo para crear el canal
+    private fun crearCanalNoti() {
+        // Verificar que el SDK sea Android 8.0 (Oreo) o superior
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val canal = NotificationChannel(
+                CANAL_ID,
+                "Notificaciones generales",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            canal.description = "Canal para notificaciones de album"
+
+            val adminNotificaciones = getSystemService(NotificationManager::class.java)
+            adminNotificaciones.createNotificationChannel(canal)
         }
     }
+
+    // 2. Metodo para crear y mostrar la notificacion
+    private fun mostrarNoti() {
+        // Verificar permiso en Android 13 (Tiramisu) o superior
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                CODIGO_PERMISO
+            )
+            Toast.makeText(this, "Autoriza el permiso y vuelve a intentar", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val notificacion = NotificationCompat.Builder(this, CANAL_ID)
+            .setSmallIcon(R.drawable.baseline_email_24)
+            .setContentTitle("Music App")
+            .setContentText("Un album fue agregado a la base de datos")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+
+        NotificationManagerCompat
+            .from(this)
+            .notify(NOTIFICATION_ID,
+                notificacion)
+    }
+
 }
