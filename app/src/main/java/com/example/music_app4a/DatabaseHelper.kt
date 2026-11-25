@@ -22,6 +22,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
         private const val COL_CORREO = "correo"
         const val COL_PASSWORD = "password"
 
+        const val COL_FAVORITO_ID = "id"
         const val TABLE_FAVORITOS = "favoritos"
         const val COL_FAVORITO = "id"
         const val COL_ALBUM_ID = "album_id"
@@ -194,7 +195,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(
                 $COL_FECHA,
                 $COL_IMAGEN
             FROM $TABLE_FAVORITOS
-            ORDEN BY $COL_FAVORITO_ID DESC               
+            ORDER BY $COL_FAVORITO_ID DESC               
         """.trimIndent()
 
         val cursor = db.rawQuery(query_sql,null)
