@@ -128,6 +128,7 @@ class AlbumDetailActivity : AppCompatActivity() {
         // Verificar que el SDK sea Android 8.0 (Oreo) o superior
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
+                // Crear el canal val canal
                 CANAL_ID,
                 "Notificaciones generales",
                 NotificationManager.IMPORTANCE_DEFAULT
@@ -148,6 +149,7 @@ class AlbumDetailActivity : AppCompatActivity() {
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            // Preguntar al usuario por el permiso de notificaciones
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
@@ -156,7 +158,7 @@ class AlbumDetailActivity : AppCompatActivity() {
             Toast.makeText(this, "Autoriza el permiso y vuelve a intentar", Toast.LENGTH_SHORT).show()
             return
         }
-
+        // Crear la notificacion y su diseño de esta
         val notificacion = NotificationCompat.Builder(this, CANAL_ID)
             .setSmallIcon(R.drawable.baseline_email_24)
             .setContentTitle("Music App")
